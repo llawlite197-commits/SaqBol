@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #eef3f4;
+  --surface: #ffffff;
+  --surface-2: #f7fafb;
+  --surface-3: #e8eff2;
+  --text: #102430;
+  --text-muted: #5d6c76;
+  --primary: #0c5966;
+  --primary-strong: #083c47;
+  --accent: #c48a24;
+  --border: #d6e0e5;
+  --success: #29764d;
+  --warning: #ab7417;
+  --danger: #b23d3d;
+  --info: #266f94;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.workspace-card {
+  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+}
+
+.workspace-input {
+  @apply rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-700 focus:ring-4 focus:ring-teal-700/10;
+}
+
+.workspace-button {
+  @apply rounded-xl bg-teal-800 px-4 py-2 text-sm font-bold text-white hover:bg-teal-900 disabled:opacity-60;
+}

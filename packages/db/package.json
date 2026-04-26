@@ -1,0 +1,36 @@
+{
+  "name": "@saqbol/db",
+  "private": true,
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "corepack pnpm run db:generate && tsc -p tsconfig.json && node ./scripts/copy-generated.mjs",
+    "lint": "corepack pnpm run db:generate && tsc --noEmit",
+    "typecheck": "corepack pnpm run db:generate && tsc --noEmit",
+    "format": "echo @saqbol/db",
+    "db:generate": "dotenv -e ../../.env -- prisma generate --schema ./prisma/schema.prisma",
+    "db:migrate": "dotenv -e ../../.env -- prisma migrate dev --schema ./prisma/schema.prisma --name init",
+    "db:seed": "dotenv -e ../../.env -- tsx ./prisma/seed.ts",
+    "db:studio": "dotenv -e ../../.env -- prisma studio --schema ./prisma/schema.prisma"
+  },
+  "prisma": {
+    "seed": "dotenv -e ../../.env -- tsx ./prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.4.4",
+    "prisma": "^6.5.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

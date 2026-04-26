@@ -1,0 +1,786 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Prisma cannot reuse the same identifier for both enum and model names.
+/// The SQL role table remains mapped through the UserRole model below,
+/// while role codes are represented by the UserRoleCode enum.
+enum UserRoleCode {
+  CITIZEN
+  OPERATOR
+  SUPERVISOR
+  ADMIN
+}
+
+enum AccountType {
+  CITIZEN
+  EMPLOYEE
+  SYSTEM
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  BLOCKED
+  SUSPENDED
+  DELETED
+}
+
+enum RegionKind {
+  REGION
+  CITY
+}
+
+enum ComplaintStatus {
+  NEW
+  UNDER_REVIEW
+  NEED_INFO
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+  DUPLICATE
+}
+
+enum ComplaintContactType {
+  PHONE
+  URL
+  EMAIL
+  CARD
+  IBAN
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum NotificationType {
+  OTP
+  COMPLAINT_CREATED
+  COMPLAINT_STATUS_CHANGED
+  NEED_INFO_REQUESTED
+  COMMENT_ADDED
+  EXPORT_READY
+  NEWS_PUBLISHED
+  SYSTEM_ALERT
+}
+
+enum AuditAction {
+  USER_REGISTERED
+  USER_LOGGED_IN
+  USER_LOGGED_OUT
+  USER_UPDATED
+  ROLE_ASSIGNED
+  ROLE_REVOKED
+  COMPLAINT_CREATED
+  COMPLAINT_UPDATED
+  COMPLAINT_STATUS_CHANGED
+  COMPLAINT_ASSIGNED
+  COMMENT_CREATED
+  FILE_UPLOADED
+  FILE_DOWNLOADED
+  BLACKLIST_CHECKED
+  BLACKLIST_ENTRY_CREATED
+  BLACKLIST_ENTRY_UPDATED
+  BLACKLIST_ENTRY_DELETED
+  NOTIFICATION_SENT
+  NEWS_CREATED
+  NEWS_UPDATED
+  NEWS_DELETED
+  NEWS_PUBLISHED
+  EXPORT_REQUESTED
+  EXPORT_COMPLETED
+  SETTING_UPDATED
+  AI_REQUESTED
+}
+
+enum RequestSource {
+  PUBLIC_WEB
+  WORKSPACE_WEB
+  API
+  SYSTEM
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  CANCELLED
+}
+
+enum NewsStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum OtpPurpose {
+  REGISTRATION
+  LOGIN
+  PASSWORD_RESET
+  EMAIL_VERIFICATION
+  PHONE_VERIFICATION
+  TWO_FACTOR
+}
+
+enum OtpDeliveryChannel {
+  SMS
+  EMAIL
+}
+
+enum TwoFactorMethod {
+  TOTP
+  SMS
+  EMAIL
+}
+
+enum TwoFactorSessionStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+  FAILED
+  CANCELLED
+}
+
+enum ExportJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+enum ExportJobType {
+  COMPLAINTS_CSV
+  COMPLAINTS_XLSX
+  COMPLAINT_CARD_PDF
+  AUDIT_LOGS_CSV
+  NEWS_CSV
+}
+
+enum SettingValueType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+enum CommentVisibility {
+  INTERNAL
+  CITIZEN
+  SYSTEM
+}
+
+enum FileScanStatus {
+  PENDING_SCAN
+  ACTIVE
+  QUARANTINED
+  DELETED
+}
+
+enum BlacklistSource {
+  COMPLAINT
+  MANUAL
+  IMPORT
+  EXTERNAL_SYNC
+}
+
+model Role {
+  id          String       @id @default(uuid()) @db.Uuid
+  code        UserRoleCode @unique
+  nameKz      String       @map("name_kz") @db.VarChar(150)
+  nameRu      String       @map("name_ru") @db.VarChar(150)
+  description String?      @db.Text
+  isSystem    Boolean      @default(true) @map("is_system")
+  isActive    Boolean      @default(true) @map("is_active")
+  sortOrder   Int          @default(0) @map("sort_order") @db.SmallInt
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  userRoles UserRole[]
+
+  @@index([isActive, sortOrder])
+  @@map("roles")
+}
+
+model Region {
+  id        String     @id @default(uuid()) @db.Uuid
+  code      String     @unique @db.VarChar(50)
+  kind      RegionKind @default(REGION)
+  nameKz    String     @map("name_kz") @db.VarChar(200)
+  nameRu    String     @map("name_ru") @db.VarChar(200)
+  isActive  Boolean    @default(true) @map("is_active")
+  sortOrder Int        @default(0) @map("sort_order") @db.SmallInt
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employeeProfiles EmployeeProfile[]
+  citizenProfiles  CitizenProfile[]
+  complaints       Complaint[]
+  blacklistEntries BlacklistEntry[]
+  news             News[]
+
+  @@index([kind])
+  @@index([isActive])
+  @@map("regions")
+}
+
+model FraudType {
+  id            String    @id @default(uuid()) @db.Uuid
+  code          String    @unique @db.VarChar(100)
+  nameKz        String    @map("name_kz") @db.VarChar(200)
+  nameRu        String    @map("name_ru") @db.VarChar(200)
+  descriptionKz String?   @map("description_kz") @db.Text
+  descriptionRu String?   @map("description_ru") @db.Text
+  isActive      Boolean   @default(true) @map("is_active")
+  sortOrder     Int       @default(0) @map("sort_order") @db.SmallInt
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  complaints       Complaint[]
+  blacklistEntries BlacklistEntry[]
+
+  @@index([isActive, sortOrder])
+  @@map("fraud_types")
+}
+
+model ComplaintStatusDictionary {
+  id          String          @id @default(uuid()) @db.Uuid
+  code        ComplaintStatus @unique
+  nameKz      String          @map("name_kz") @db.VarChar(150)
+  nameRu      String          @map("name_ru") @db.VarChar(150)
+  description String?         @db.Text
+  isTerminal  Boolean         @default(false) @map("is_terminal")
+  isActive    Boolean         @default(true) @map("is_active")
+  sortOrder   Int             @default(0) @map("sort_order") @db.SmallInt
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([sortOrder])
+  @@map("complaint_statuses")
+}
+
+model User {
+  id                  String      @id @default(uuid()) @db.Uuid
+  accountType         AccountType @map("account_type")
+  email               String?
+  phone               String?     @db.VarChar(32)
+  passwordHash        String?     @map("password_hash") @db.Text
+  status              UserStatus  @default(PENDING_VERIFICATION)
+  isEmailVerified     Boolean     @default(false) @map("is_email_verified")
+  emailVerifiedAt     DateTime?   @map("email_verified_at") @db.Timestamptz(6)
+  isPhoneVerified     Boolean     @default(false) @map("is_phone_verified")
+  phoneVerifiedAt     DateTime?   @map("phone_verified_at") @db.Timestamptz(6)
+  lastLoginAt         DateTime?   @map("last_login_at") @db.Timestamptz(6)
+  failedLoginAttempts Int         @default(0) @map("failed_login_attempts") @db.SmallInt
+  lockedUntil         DateTime?   @map("locked_until") @db.Timestamptz(6)
+  passwordChangedAt   DateTime?   @map("password_changed_at") @db.Timestamptz(6)
+  deletedAt           DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  citizenProfile         CitizenProfile?
+  employeeProfile        EmployeeProfile?
+  userRoles              UserRole[]               @relation("UserRoleAssignments")
+  assignedUserRoles      UserRole[]               @relation("AssignedUserRoles")
+  revokedUserRoles       UserRole[]               @relation("RevokedUserRoles")
+  citizenComplaints      Complaint[]              @relation("CitizenComplaints")
+  uploadedComplaintFiles ComplaintFile[]          @relation("UploadedComplaintFiles")
+  complaintStatusChanges ComplaintStatusHistory[]
+  complaintComments      ComplaintComment[]       @relation("ComplaintCommentAuthors")
+  blacklistChecks        BlacklistCheck[]
+  notifications          Notification[]
+  authoredNews           News[]
+  auditLogs              AuditLog[]
+  refreshTokens          RefreshToken[]           @relation("UserRefreshTokens")
+  otpCodes               OtpCode[]
+  twoFactorSessions      TwoFactorSession[]
+  exportJobs             ExportJob[]
+  updatedSystemSettings  SystemSetting[]          @relation("UpdatedSystemSettings")
+
+  @@index([accountType])
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+  @@index([phone])
+  @@map("users")
+}
+
+model EmployeeProfile {
+  id                 String          @id @default(uuid()) @db.Uuid
+  userId             String          @unique @map("user_id") @db.Uuid
+  employeeCode       String          @map("employee_code") @db.VarChar(50)
+  firstName          String          @map("first_name") @db.VarChar(100)
+  lastName           String          @map("last_name") @db.VarChar(100)
+  patronymic         String?         @db.VarChar(100)
+  positionTitle      String?         @map("position_title") @db.VarChar(200)
+  departmentName     String?         @map("department_name") @db.VarChar(200)
+  regionId           String?         @map("region_id") @db.Uuid
+  isActive           Boolean         @default(true) @map("is_active")
+  preferred2faMethod TwoFactorMethod @default(TOTP) @map("preferred_2fa_method")
+  lastActivityAt     DateTime?       @map("last_activity_at") @db.Timestamptz(6)
+  deletedAt          DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user               User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  region             Region?     @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  assignedComplaints Complaint[] @relation("AssignedComplaints")
+
+  @@index([regionId])
+  @@index([isActive])
+  @@index([employeeCode])
+  @@map("employee_profiles")
+}
+
+model CitizenProfile {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @unique @map("user_id") @db.Uuid
+  iin               String?   @db.Char(12)
+  firstName         String    @map("first_name") @db.VarChar(100)
+  lastName          String    @map("last_name") @db.VarChar(100)
+  patronymic        String?   @db.VarChar(100)
+  birthDate         DateTime? @map("birth_date") @db.Date
+  regionId          String?   @map("region_id") @db.Uuid
+  preferredLanguage String    @default("ru") @map("preferred_language") @db.VarChar(5)
+  address           String?   @db.Text
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  region Region? @relation(fields: [regionId], references: [id], onDelete: Restrict)
+
+  @@index([iin])
+  @@index([regionId])
+  @@map("citizen_profiles")
+}
+
+model UserRole {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  roleId           String    @map("role_id") @db.Uuid
+  assignedByUserId String?   @map("assigned_by_user_id") @db.Uuid
+  assignedAt       DateTime  @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokedByUserId  String?   @map("revoked_by_user_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user           User  @relation("UserRoleAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  role           Role  @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  assignedByUser User? @relation("AssignedUserRoles", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+  revokedByUser  User? @relation("RevokedUserRoles", fields: [revokedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([roleId])
+  @@index([revokedAt])
+  @@index([userId, roleId])
+  @@map("user_roles")
+}
+
+model Complaint {
+  id                        String          @id @default(uuid()) @db.Uuid
+  complaintNumber           String          @unique @map("complaint_number") @db.VarChar(32)
+  citizenUserId             String          @map("citizen_user_id") @db.Uuid
+  regionId                  String          @map("region_id") @db.Uuid
+  fraudTypeId               String          @map("fraud_type_id") @db.Uuid
+  title                     String?         @db.VarChar(255)
+  description               String          @db.Text
+  incidentAt                DateTime?       @map("incident_at") @db.Timestamptz(6)
+  damageAmount              Decimal?        @map("damage_amount") @db.Decimal(18, 2)
+  damageCurrency            String          @default("KZT") @map("damage_currency") @db.Char(3)
+  currentStatus             ComplaintStatus @default(NEW) @map("current_status")
+  currentAssigneeEmployeeId String?         @map("current_assignee_employee_id") @db.Uuid
+  duplicateOfComplaintId    String?         @map("duplicate_of_complaint_id") @db.Uuid
+  submissionSource          RequestSource   @default(PUBLIC_WEB) @map("submission_source")
+  submittedAt               DateTime        @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  lastStatusChangedAt       DateTime        @default(now()) @map("last_status_changed_at") @db.Timestamptz(6)
+  resolvedAt                DateTime?       @map("resolved_at") @db.Timestamptz(6)
+  metadata                  Json            @default("{}") @db.JsonB
+  createdAt                 DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  citizenUser             User                     @relation("CitizenComplaints", fields: [citizenUserId], references: [id], onDelete: Restrict)
+  region                  Region                   @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  fraudType               FraudType                @relation(fields: [fraudTypeId], references: [id], onDelete: Restrict)
+  currentAssigneeEmployee EmployeeProfile?         @relation("AssignedComplaints", fields: [currentAssigneeEmployeeId], references: [id], onDelete: SetNull)
+  duplicateOfComplaint    Complaint?               @relation("ComplaintDuplicates", fields: [duplicateOfComplaintId], references: [id], onDelete: SetNull)
+  duplicateComplaints     Complaint[]              @relation("ComplaintDuplicates")
+  contacts                ComplaintContact[]
+  files                   ComplaintFile[]
+  statusHistory           ComplaintStatusHistory[]
+  comments                ComplaintComment[]
+  blacklistEntries        BlacklistEntry[]
+
+  @@index([citizenUserId])
+  @@index([regionId])
+  @@index([fraudTypeId])
+  @@index([currentStatus])
+  @@index([currentAssigneeEmployeeId])
+  @@index([submittedAt])
+  @@index([lastStatusChangedAt])
+  @@index([duplicateOfComplaintId])
+  @@map("complaints")
+}
+
+model ComplaintContact {
+  id              String               @id @default(uuid()) @db.Uuid
+  complaintId     String               @map("complaint_id") @db.Uuid
+  contactType     ComplaintContactType @map("contact_type")
+  rawValue        String               @map("raw_value") @db.Text
+  normalizedValue String?              @map("normalized_value") @db.Text
+  label           String?              @db.VarChar(255)
+  isPrimary       Boolean              @default(false) @map("is_primary")
+  metadata        Json                 @default("{}") @db.JsonB
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  @@unique([complaintId, contactType, normalizedValue])
+  @@index([complaintId])
+  @@index([contactType, normalizedValue])
+  @@map("complaint_contacts")
+}
+
+model ComplaintFile {
+  id               String         @id @default(uuid()) @db.Uuid
+  complaintId      String         @map("complaint_id") @db.Uuid
+  uploadedByUserId String?        @map("uploaded_by_user_id") @db.Uuid
+  originalFileName String         @map("original_file_name") @db.VarChar(255)
+  storageBucket    String         @map("storage_bucket") @db.VarChar(128)
+  storageObjectKey String         @map("storage_object_key") @db.VarChar(1024)
+  mimeType         String         @map("mime_type") @db.VarChar(255)
+  fileSizeBytes    BigInt         @map("file_size_bytes")
+  checksumSha256   String?        @map("checksum_sha256") @db.Char(64)
+  fileStatus       FileScanStatus @default(PENDING_SCAN) @map("file_status")
+  isInternal       Boolean        @default(false) @map("is_internal")
+  scanCompletedAt  DateTime?      @map("scan_completed_at") @db.Timestamptz(6)
+  deletedAt        DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  complaint      Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  uploadedByUser User?     @relation("UploadedComplaintFiles", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([storageBucket, storageObjectKey])
+  @@index([complaintId])
+  @@index([uploadedByUserId])
+  @@index([fileStatus])
+  @@map("complaint_files")
+}
+
+model ComplaintStatusHistory {
+  id              String           @id @default(uuid()) @db.Uuid
+  complaintId     String           @map("complaint_id") @db.Uuid
+  fromStatus      ComplaintStatus? @map("from_status")
+  toStatus        ComplaintStatus  @map("to_status")
+  reasonCode      String?          @map("reason_code") @db.VarChar(100)
+  reasonText      String?          @map("reason_text") @db.Text
+  changedByUserId String?          @map("changed_by_user_id") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  complaint     Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  changedByUser User?     @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([complaintId, createdAt])
+  @@index([changedByUserId])
+  @@map("complaint_status_history")
+}
+
+model ComplaintComment {
+  id                String            @id @default(uuid()) @db.Uuid
+  complaintId       String            @map("complaint_id") @db.Uuid
+  authorUserId      String?           @map("author_user_id") @db.Uuid
+  parentCommentId   String?           @map("parent_comment_id") @db.Uuid
+  visibility        CommentVisibility @default(INTERNAL)
+  commentText       String            @map("comment_text") @db.Text
+  isSystemGenerated Boolean           @default(false) @map("is_system_generated")
+  deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  complaint     Complaint          @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  authorUser    User?              @relation("ComplaintCommentAuthors", fields: [authorUserId], references: [id], onDelete: SetNull)
+  parentComment ComplaintComment?  @relation("ComplaintCommentThread", fields: [parentCommentId], references: [id], onDelete: SetNull)
+  childComments ComplaintComment[] @relation("ComplaintCommentThread")
+
+  @@index([complaintId, createdAt])
+  @@index([authorUserId])
+  @@index([visibility])
+  @@map("complaint_comments")
+}
+
+model BlacklistEntry {
+  id                String               @id @default(uuid()) @db.Uuid
+  entryType         ComplaintContactType @map("entry_type")
+  rawValue          String               @map("raw_value") @db.Text
+  normalizedValue   String               @map("normalized_value") @db.Text
+  fraudTypeId       String?              @map("fraud_type_id") @db.Uuid
+  regionId          String?              @map("region_id") @db.Uuid
+  sourceComplaintId String?              @map("source_complaint_id") @db.Uuid
+  sourceType        BlacklistSource      @default(COMPLAINT) @map("source_type")
+  notes             String?              @db.Text
+  riskScore         Int                  @default(50) @map("risk_score") @db.SmallInt
+  isActive          Boolean              @default(true) @map("is_active")
+  lastSeenAt        DateTime?            @map("last_seen_at") @db.Timestamptz(6)
+  deletedAt         DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  fraudType       FraudType?       @relation(fields: [fraudTypeId], references: [id], onDelete: SetNull)
+  region          Region?          @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  sourceComplaint Complaint?       @relation(fields: [sourceComplaintId], references: [id], onDelete: SetNull)
+  blacklistChecks BlacklistCheck[]
+
+  @@index([fraudTypeId])
+  @@index([regionId])
+  @@index([isActive])
+  @@index([entryType, normalizedValue])
+  @@map("blacklist_entries")
+}
+
+model BlacklistCheck {
+  id                      String               @id @default(uuid()) @db.Uuid
+  checkedByUserId         String?              @map("checked_by_user_id") @db.Uuid
+  checkType               ComplaintContactType @map("check_type")
+  inputValue              String               @map("input_value") @db.Text
+  normalizedValue         String?              @map("normalized_value") @db.Text
+  matchedBlacklistEntryId String?              @map("matched_blacklist_entry_id") @db.Uuid
+  matchFound              Boolean              @default(false) @map("match_found")
+  matchCount              Int                  @default(0) @map("match_count")
+  source                  RequestSource        @default(PUBLIC_WEB)
+  requestIp               String?              @map("request_ip")
+  userAgent               String?              @map("user_agent") @db.Text
+  responsePayload         Json                 @default("{}") @map("response_payload") @db.JsonB
+  createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime             @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  checkedByUser         User?           @relation(fields: [checkedByUserId], references: [id], onDelete: SetNull)
+  matchedBlacklistEntry BlacklistEntry? @relation(fields: [matchedBlacklistEntryId], references: [id], onDelete: SetNull)
+
+  @@index([checkedByUserId])
+  @@index([checkType, normalizedValue])
+  @@index([createdAt])
+  @@map("blacklist_checks")
+}
+
+model Notification {
+  id                String              @id @default(uuid()) @db.Uuid
+  userId            String              @map("user_id") @db.Uuid
+  channel           NotificationChannel
+  notificationType  NotificationType    @map("notification_type")
+  subject           String?             @db.VarChar(255)
+  body              String              @db.Text
+  payload           Json                @default("{}") @db.JsonB
+  status            NotificationStatus  @default(PENDING)
+  sentAt            DateTime?           @map("sent_at") @db.Timestamptz(6)
+  deliveredAt       DateTime?           @map("delivered_at") @db.Timestamptz(6)
+  readAt            DateTime?           @map("read_at") @db.Timestamptz(6)
+  failedAt          DateTime?           @map("failed_at") @db.Timestamptz(6)
+  failureReason     String?             @map("failure_reason") @db.Text
+  relatedEntityType String?             @map("related_entity_type") @db.VarChar(100)
+  relatedEntityId   String?             @map("related_entity_id") @db.Uuid
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([channel])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model News {
+  id                  String     @id @default(uuid()) @db.Uuid
+  slug                String
+  titleKz             String     @map("title_kz") @db.VarChar(255)
+  titleRu             String     @map("title_ru") @db.VarChar(255)
+  summaryKz           String?    @map("summary_kz") @db.Text
+  summaryRu           String?    @map("summary_ru") @db.Text
+  contentKz           String     @map("content_kz") @db.Text
+  contentRu           String     @map("content_ru") @db.Text
+  regionId            String?    @map("region_id") @db.Uuid
+  status              NewsStatus @default(DRAFT)
+  publishedAt         DateTime?  @map("published_at") @db.Timestamptz(6)
+  authorUserId        String?    @map("author_user_id") @db.Uuid
+  coverImageBucket    String?    @map("cover_image_bucket") @db.VarChar(128)
+  coverImageObjectKey String?    @map("cover_image_object_key") @db.VarChar(1024)
+  deletedAt           DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  region     Region? @relation(fields: [regionId], references: [id], onDelete: SetNull)
+  authorUser User?   @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([regionId])
+  @@map("news")
+}
+
+model AuditLog {
+  id                 String      @id @default(uuid()) @db.Uuid
+  actorUserId        String?     @map("actor_user_id") @db.Uuid
+  actionType         AuditAction @map("action_type")
+  entityType         String      @map("entity_type") @db.VarChar(100)
+  entityId           String?     @map("entity_id") @db.Uuid
+  requestId          String?     @map("request_id") @db.VarChar(100)
+  ipAddress          String?     @map("ip_address")
+  userAgent          String?     @map("user_agent") @db.Text
+  httpMethod         String?     @map("http_method") @db.VarChar(16)
+  requestPath        String?     @map("request_path") @db.Text
+  responseStatusCode Int?        @map("response_status_code")
+  oldValues          Json?       @map("old_values") @db.JsonB
+  newValues          Json?       @map("new_values") @db.JsonB
+  metadata           Json        @default("{}") @db.JsonB
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime    @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  actorUser User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([requestId])
+  @@index([createdAt])
+  @@index([actionType])
+  @@map("audit_logs")
+}
+
+model RefreshToken {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  tokenHash         String    @unique @map("token_hash") @db.Char(64)
+  tokenFamilyId     String    @map("token_family_id") @db.Uuid
+  replacedByTokenId String?   @map("replaced_by_token_id") @db.Uuid
+  issuedIp          String?   @map("issued_ip")
+  userAgent         String?   @map("user_agent") @db.Text
+  expiresAt         DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt         DateTime? @map("revoked_at") @db.Timestamptz(6)
+  lastUsedAt        DateTime? @map("last_used_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user            User           @relation("UserRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+  replacedByToken RefreshToken?  @relation("RefreshTokenReplacement", fields: [replacedByTokenId], references: [id], onDelete: SetNull)
+  replacedTokens  RefreshToken[] @relation("RefreshTokenReplacement")
+
+  @@index([userId])
+  @@index([tokenFamilyId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@map("refresh_tokens")
+}
+
+model OtpCode {
+  id           String             @id @default(uuid()) @db.Uuid
+  userId       String?            @map("user_id") @db.Uuid
+  purpose      OtpPurpose
+  channel      OtpDeliveryChannel
+  target       String             @db.VarChar(255)
+  codeHash     String             @map("code_hash") @db.Char(64)
+  expiresAt    DateTime           @map("expires_at") @db.Timestamptz(6)
+  consumedAt   DateTime?          @map("consumed_at") @db.Timestamptz(6)
+  attemptsUsed Int                @default(0) @map("attempts_used") @db.SmallInt
+  maxAttempts  Int                @default(5) @map("max_attempts") @db.SmallInt
+  requestIp    String?            @map("request_ip")
+  createdAt    DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([target, purpose, expiresAt])
+  @@index([createdAt])
+  @@map("otp_codes")
+}
+
+model TwoFactorSession {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  userId                String                 @map("user_id") @db.Uuid
+  method                TwoFactorMethod
+  sessionStatus         TwoFactorSessionStatus @default(PENDING) @map("session_status")
+  verificationTokenHash String                 @unique @map("verification_token_hash") @db.Char(64)
+  challengeExpiresAt    DateTime               @map("challenge_expires_at") @db.Timestamptz(6)
+  verifiedAt            DateTime?              @map("verified_at") @db.Timestamptz(6)
+  trustedDevice         Boolean                @default(false) @map("trusted_device")
+  requestIp             String?                @map("request_ip")
+  userAgent             String?                @map("user_agent") @db.Text
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionStatus])
+  @@index([challengeExpiresAt])
+  @@map("two_factor_sessions")
+}
+
+model ExportJob {
+  id                String          @id @default(uuid()) @db.Uuid
+  requestedByUserId String          @map("requested_by_user_id") @db.Uuid
+  jobType           ExportJobType   @map("job_type")
+  jobStatus         ExportJobStatus @default(PENDING) @map("job_status")
+  filters           Json            @default("{}") @db.JsonB
+  fileName          String?         @map("file_name") @db.VarChar(255)
+  storageBucket     String?         @map("storage_bucket") @db.VarChar(128)
+  storageObjectKey  String?         @map("storage_object_key") @db.VarChar(1024)
+  rowCount          Int?            @map("row_count")
+  startedAt         DateTime?       @map("started_at") @db.Timestamptz(6)
+  completedAt       DateTime?       @map("completed_at") @db.Timestamptz(6)
+  failedAt          DateTime?       @map("failed_at") @db.Timestamptz(6)
+  expiresAt         DateTime?       @map("expires_at") @db.Timestamptz(6)
+  errorMessage      String?         @map("error_message") @db.Text
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  requestedByUser User @relation(fields: [requestedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([requestedByUserId])
+  @@index([jobStatus])
+  @@index([createdAt])
+  @@map("export_jobs")
+}
+
+model SystemSetting {
+  id              String           @id @default(uuid()) @db.Uuid
+  settingKey      String           @unique @map("setting_key") @db.VarChar(150)
+  settingGroup    String           @default("general") @map("setting_group") @db.VarChar(100)
+  settingValue    Json             @map("setting_value") @db.JsonB
+  valueType       SettingValueType @default(STRING) @map("value_type")
+  description     String?          @db.Text
+  isSecret        Boolean          @default(false) @map("is_secret")
+  isPublic        Boolean          @default(false) @map("is_public")
+  updatedByUserId String?          @map("updated_by_user_id") @db.Uuid
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  updatedByUser User? @relation("UpdatedSystemSettings", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([settingGroup])
+  @@index([deletedAt])
+  @@map("system_settings")
+}

@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build artifacts
+dist/
+.next/
+coverage/
+*.tsbuildinfo
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# runtime and storage
+tmp/
+uploads/
+storage/
+infrastructure/nginx/certs/
+minio/
+
+# test
+playwright-report/
+test-results/

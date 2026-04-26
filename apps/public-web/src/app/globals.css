@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #f7fafc;
+  --surface: #ffffff;
+  --surface-muted: #edf3f8;
+  --text: #052447;
+  --text-muted: #5d7188;
+  --primary: #0b2c4d;
+  --primary-strong: #08213a;
+  --secondary: #32afe6;
+  --accent: #e04747;
+  --success: #2b7a4b;
+  --warning: #b8791a;
+  --danger: #df4547;
+  --border: #d6e1ec;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(50, 175, 230, 0.35);
+}
+
+.focus-ring {
+  @apply focus:outline-none focus:ring-4 focus:ring-sky-500/20;
+}
+
+.saq-container {
+  @apply mx-auto max-w-[1710px] px-5 sm:px-8 lg:px-20;
+}
+
+.saq-card {
+  @apply rounded-xl border border-[#d6e1ec] bg-white shadow-[0_16px_40px_rgba(6,36,71,0.06)];
+}
+
+.saq-cta {
+  @apply rounded-lg bg-[#df4547] px-6 py-4 font-extrabold text-white shadow-sm transition hover:bg-[#c93638];
+}
+
+.saq-navy {
+  background: #0b2c4d;
+}
+
+.saq-hero-grid {
+  background-image:
+    linear-gradient(rgba(11, 44, 77, 0.88), rgba(11, 44, 77, 0.92)),
+    radial-gradient(circle at 38% 42%, rgba(50, 175, 230, 0.16), transparent 19rem),
+    linear-gradient(135deg, rgba(50, 175, 230, 0.1) 1px, transparent 1px);
+  background-size: auto, auto, 34px 34px;
+}
+
+.saq-form-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #d7e0ea;
+  background: #ffffff;
+  padding: 14px 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #062747;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.saq-form-input::placeholder {
+  color: #64748b;
+}
+
+.saq-form-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.16);
+}
+
+select.saq-form-input {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #64748b 50%),
+    linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) calc(50% - 3px),
+    calc(100% - 16px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}

@@ -1,0 +1,25 @@
+{
+  "name": "saqbol",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev.ps1",
+    "dev:public": "corepack pnpm --filter public-web dev",
+    "dev:workspace": "corepack pnpm --filter workspace-web dev",
+    "dev:api": "corepack pnpm --filter api start:dev",
+    "dev:ai": "corepack pnpm --filter ai-service start:dev",
+    "db:generate": "corepack pnpm --filter @saqbol/db db:generate",
+    "db:migrate": "corepack pnpm --filter @saqbol/db db:migrate",
+    "db:seed": "corepack pnpm --filter @saqbol/db db:seed",
+    "db:studio": "corepack pnpm --filter @saqbol/db db:studio",
+    "build": "corepack pnpm -r build",
+    "lint": "corepack pnpm -r lint",
+    "typecheck": "corepack pnpm -r typecheck",
+    "format": "corepack pnpm -r format"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
+  }
+}
