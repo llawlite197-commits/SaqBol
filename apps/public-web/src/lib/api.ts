@@ -11,7 +11,8 @@ import type {
   Region
 } from "../types";
 
-const apiBaseUrl = "/api/v1";
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 type RequestOptions = RequestInit & {
   auth?: boolean;

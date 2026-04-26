@@ -5,6 +5,7 @@ import { api } from "../lib/api";
 import type { MapRegionStat, MapStatsResponse, RiskLevel } from "../types";
 import { useI18n } from "../i18n/useI18n";
 import type { TranslationKey } from "../i18n/translations";
+import { demoMapStats } from "../data/demo-map-stats";
 import { kazakhstanMapRegions } from "../data/kazakhstan-map-paths";
 import { kazakhstanMapMeta } from "../data/kazakhstan-map-meta";
 
@@ -109,9 +110,11 @@ export function KazakhstanInteractiveMap() {
         setData(response);
         setSelectedRegionCode(response.summary.topRegion?.code ?? "ASTANA");
       })
-      .catch((requestError) => {
+      .catch(() => {
         if (!isMounted) return;
-        setError(requestError instanceof Error ? requestError.message : t("map.error"));
+        setData(demoMapStats);
+        setSelectedRegionCode(demoMapStats.summary.topRegion?.code ?? "ASTANA");
+        setError(null);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
