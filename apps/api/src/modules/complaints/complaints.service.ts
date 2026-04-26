@@ -50,6 +50,7 @@ export class ComplaintsService {
         submissionSource: RequestSource.PUBLIC_WEB,
         metadata: {
           fullName: dto.fullName,
+          iin: dto.iin,
           phone: dto.phone,
           email: dto.email,
           scammerData: dto.scammerData ?? null

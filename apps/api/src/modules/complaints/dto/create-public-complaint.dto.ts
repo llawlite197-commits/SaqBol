@@ -4,6 +4,8 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Length,
+  Matches,
   MinLength
 } from "class-validator";
 
@@ -11,6 +13,11 @@ export class CreatePublicComplaintDto {
   @IsString()
   @IsNotEmpty()
   fullName!: string;
+
+  @IsString()
+  @Length(12, 12)
+  @Matches(/^\d{12}$/)
+  iin!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -35,7 +42,7 @@ export class CreatePublicComplaintDto {
   fraudTypeId!: string;
 
   @IsString()
-  @MinLength(30)
+  @MinLength(300)
   description!: string;
 
   @IsOptional()

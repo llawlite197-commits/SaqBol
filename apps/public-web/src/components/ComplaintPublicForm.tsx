@@ -18,6 +18,7 @@ type SubmitStatus =
 export function ComplaintPublicForm() {
   const { language, t } = useI18n();
   const [fullName, setFullName] = useState("");
+  const [iin, setIin] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
@@ -104,6 +105,11 @@ export function ComplaintPublicForm() {
       return;
     }
 
+    if (!/^\d{12}$/.test(iin)) {
+      setStatus({ type: "error", message: t("complaint.error.iin") });
+      return;
+    }
+
     if (!phone.trim()) {
       setStatus({ type: "error", message: t("complaint.error.phone") });
       return;
@@ -142,6 +148,7 @@ export function ComplaintPublicForm() {
 
       const formData = new FormData();
       formData.append("fullName", fullName.trim());
+      formData.append("iin", iin);
       formData.append("phone", phone.trim());
       formData.append("email", email.trim());
       formData.append("incidentDate", incidentDate);
@@ -164,6 +171,7 @@ export function ComplaintPublicForm() {
 
       setDescription("");
       setScammerData("");
+      setIin("");
       setFiles([]);
     } catch (error) {
       setStatus({
@@ -181,6 +189,30 @@ export function ComplaintPublicForm() {
       onSubmit={submit}
       className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10"
     >
+      <div className="mb-6 flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M7 10V8a5 5 0 0 1 10 0v2"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+            <rect
+              x="5"
+              y="10"
+              width="14"
+              height="10"
+              rx="2"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path d="M12 14v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </span>
+        <p className="leading-6">{t("complaint.securityNote")}</p>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
         <Field label={t("complaint.fullName")} required>
           <input
@@ -188,6 +220,18 @@ export function ComplaintPublicForm() {
             onChange={(event) => setFullName(event.target.value)}
             className="saq-form-input"
             placeholder={t("complaint.fullNamePlaceholder")}
+          />
+        </Field>
+
+        <Field label={t("complaint.iin")} required>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={12}
+            value={iin}
+            onChange={(event) => setIin(event.target.value.replace(/\D/g, "").slice(0, 12))}
+            className="saq-form-input"
+            placeholder={t("complaint.iinPlaceholder")}
           />
         </Field>
 
@@ -200,7 +244,7 @@ export function ComplaintPublicForm() {
           />
         </Field>
 
-        <Field label={t("complaint.email")} required className="md:col-span-2">
+        <Field label={t("complaint.email")} required>
           <input
             type="email"
             value={email}
