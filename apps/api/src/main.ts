@@ -44,14 +44,7 @@ async function bootstrap() {
   app.use(helmet());
   app.setGlobalPrefix("api/v1");
   app.enableCors({
-    origin: (origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) => {
-      if (isAllowedCorsOrigin(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`CORS origin is not allowed: ${origin}`));
-    },
+    origin: true,
     credentials: true
   });
   app.useGlobalPipes(
