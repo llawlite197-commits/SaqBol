@@ -42,3 +42,18 @@ export function clearStaffSession() {
 export function isStaffAuthenticated() {
   return Boolean(getAccessToken());
 }
+export function getTwoFactorSessionId(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("twoFactorSessionId");
+}
+
+export function getTwoFactorMockCode(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("twoFactorMockCode");
+}
+
+export function clearTwoFactorChallenge(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("twoFactorSessionId");
+  localStorage.removeItem("twoFactorMockCode");
+}
